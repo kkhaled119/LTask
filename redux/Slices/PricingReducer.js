@@ -4,16 +4,18 @@ import axios from "axios";
 
 // Async thunk for fetching pricing data
 export const fetchPricingData = createAsyncThunk(
-    "pricing/fetchPricingData",
-    async (_, { rejectWithValue }) => {
-      try {
-        const response = await axios.get("http://127.0.0.1:8000/plans/plan_list/");
-        return response.data;
-      } catch (error) {
-        return rejectWithValue(error.message);
-      }
+  "pricing/fetchPricingData",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(
+        "http://127.0.0.1:8000/plans/plan_list/"
+      );
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.message);
     }
-  );
+  }
+);
 const pricingSlice = createSlice({
   name: "pricing",
   initialState: {

@@ -1,14 +1,9 @@
-import { configureStore } from '@reduxjs/toolkit';
-import authReducer from './Slices/AuthSlice/AuthReducer';
-import pricingReducer from './Slices/PricingReducer';
-import loginReducer from './Slices/AuthSlice/LoginReducer';
-import freedashboardReducer from './Slices/DashboardSlice/Free-Dashboard/FreeDashboardReducer';
+import { configureStore } from "@reduxjs/toolkit";
+import pricingReducer from "./Slices/PricingReducer";
+
 const store = configureStore({
   reducer: {
-    auth: authReducer,  
-    login : loginReducer,
     pricing: pricingReducer,
-    freedashboard:freedashboardReducer,
   },
 });
 

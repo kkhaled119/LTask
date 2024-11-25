@@ -1,30 +1,42 @@
-import { StyleSheet, Text, View, SafeAreaView, ScrollView } from "react-native";
-import React from "react";
+import {
+  StyleSheet,
+  Text,
+  View,
+  SafeAreaView,
+  ScrollView,
+  ActivityIndicator,
+} from "react-native";
+import React, { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import Ionicons from "@expo/vector-icons/Ionicons";
 
 import PricingCard from "../../components/PricingCard";
-const plans = [
-  {
-    id: 1,
-    name: "Basic Plan",
-    description: "Includes basic features\n1GB Storage\n24/7 Support",
-    price: "5.00",
-  },
-  {
-    id: 2,
-    name: "Premium Plan",
-    description: "Includes advanced features\n10GB Storage\nPriority Support",
-    price: "15.00",
-  },
-  {
-    id: 3,
-    name: "Pro Plan",
-    description: "Includes all features\n50GB Storage\nDedicated Support",
-    price: "30.00",
-  },
-];
-
+import { fetchPricingData } from "../../redux/Slices/PricingReducer";
 const Index = () => {
+  const dispatch = useDispatch();
+
+  const { plans, loading, error } = useSelector((state) => state.pricing);
+
+  useEffect(() => {
+    dispatch(fetchPricingData());
+  }, [dispatch]);
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.center}>
+        <ActivityIndicator size="large" color="#BF3F00" />
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={styles.center}>
+        <Text style={styles.errorText}>Error: {error}</Text>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#FFF6E9" }}>
       <ScrollView style={styles.container}>
@@ -68,11 +80,21 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: "bold",
-    color: "#4B5563", // Gray color
+    color: "#4B5563",
   },
   gridContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
+  },
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#FFF6E9",
+  },
+  errorText: {
+    fontSize: 16,
+    color: "red",
   },
 });
