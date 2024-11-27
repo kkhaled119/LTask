@@ -55,7 +55,7 @@ const styles = StyleSheet.create({
     transition: "transform 0.3s",
   },
   iconContainer: {
-    backgroundColor: "#BF3F00", // Set background color
+    backgroundColor: "#BF3F00",
     padding: 16,
     borderRadius: 50,
     marginBottom: 16,

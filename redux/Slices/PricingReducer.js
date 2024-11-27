@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
-// import APILINK from "../../../Constants"; // Ensure this is the correct base API URL
+import APILINK from "../../constant";
 
 // Async thunk for fetching pricing data
 export const fetchPricingData = createAsyncThunk(

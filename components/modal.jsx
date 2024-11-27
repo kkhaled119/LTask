@@ -11,15 +11,13 @@ import { AntDesign } from "@expo/vector-icons";
 import DateTimePicker from "react-native-modal-datetime-picker";
 import DropdownComponent from "./ DropdownComponent";
 
-const ModalComponent = ({ visible, onClose }) => {
+const ModalComponent = ({ visible, onClose, onAddTask }) => {
   const [taskTitle, setTaskTitle] = useState("");
   const [taskDescription, setTaskDescription] = useState("");
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [selectedStartTime, setSelectedStartTime] = useState("");
   const [selectedEndTime, setSelectedEndTime] = useState("");
   const [isStartTimePicker, setIsStartTimePicker] = useState(true);
-
-  // State to manage dropdown value
   const [dropdownValue, setDropdownValue] = useState(null);
 
   const dropdownData = [
@@ -31,15 +29,36 @@ const ModalComponent = ({ visible, onClose }) => {
   ];
 
   const handleCreate = () => {
-    console.log(
-      "Task Created:",
-      taskTitle,
-      taskDescription,
-      selectedStartTime,
-      selectedEndTime,
-      dropdownValue
-    );
+    if (
+      !taskTitle.trim() ||
+      !taskDescription.trim() ||
+      !selectedStartTime ||
+      !selectedEndTime ||
+      !dropdownValue
+    ) {
+      alert("Please fill out all fields.");
+      return;
+    }
+
+    const newTask = {
+      title: taskTitle,
+      description: taskDescription,
+      startTime: selectedStartTime,
+      endTime: selectedEndTime,
+      category: dropdownValue,
+    };
+
+    onAddTask(newTask);
+    clearFields();
     onClose();
+  };
+
+  const clearFields = () => {
+    setTaskTitle("");
+    setTaskDescription("");
+    setSelectedStartTime("");
+    setSelectedEndTime("");
+    setDropdownValue(null);
   };
 
   const showDatePicker = (isStart) => {

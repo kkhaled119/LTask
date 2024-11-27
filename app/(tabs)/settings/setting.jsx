@@ -62,7 +62,10 @@ const Setting = () => {
           <Text style={styles.optionText}>Change Password</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.option}>
+        <TouchableOpacity
+          style={styles.option}
+          onPress={() => router.push("./index")}
+        >
           <MaterialIcons name="logout" size={24} color="#BF3F00" />
           <Text style={styles.optionText}>Logout</Text>
         </TouchableOpacity>

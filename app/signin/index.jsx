@@ -6,16 +6,24 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import React, { useState } from "react";
-import { Link, useRouter } from "expo-router";
-import { Button } from "react-native-web";
+import { useDispatch, useSelector } from "react-redux";
+import { loginUser } from "../../redux/Slices/AuthSlice/LoginReducer";
+import { useRouter } from "expo-router";
 
 const SignIn = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const handelSubmit = () => {
+  const [loading, setLoading] = useState(false);
+  const dispatch = useDispatch();
+  const router = useRouter();
+
+  const isAuthenticated = useSelector((state) => state.login.isAuthenticated);
+
+  const handleSubmit = async () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (email === "" || password === "") {
@@ -25,11 +33,25 @@ const SignIn = () => {
     } else if (password.length < 8) {
       Alert.alert("Error", "Password must be at least 8 characters long.");
     } else {
-      Alert.alert("Success", "Logged in successfully!");
+      setLoading(true); // Show loading indicator
+      try {
+        const formData = { email, password };
+        const resultAction = await dispatch(loginUser(formData)); // Dispatch login action
+
+        if (loginUser.fulfilled.match(resultAction)) {
+          // Only redirect if login is successful
+          Alert.alert("Success", "Logged in successfully!");
+          router.push("/freeDashboard");
+        } else {
+          Alert.alert("Error", "Login failed. Please check your credentials.");
+        }
+      } catch (error) {
+        Alert.alert("Error", "An unexpected error occurred.");
+      } finally {
+        setLoading(false); // Hide loading indicator after login attempt
+      }
     }
   };
-
-  const router = useRouter();
 
   return (
     <SafeAreaView style={styles.container}>
@@ -60,14 +82,25 @@ const SignIn = () => {
           secureTextEntry
         />
       </View>
-      <TouchableOpacity style={styles.button} onPress={handelSubmit}>
-        <Text style={styles.buttonText}>Log in</Text>
+
+      {/* Show loading indicator when submitting */}
+      <TouchableOpacity
+        style={styles.button}
+        onPress={handleSubmit}
+        disabled={loading}
+      >
+        {loading ? (
+          <ActivityIndicator size="small" color="white" />
+        ) : (
+          <Text style={styles.buttonText}>Log in</Text>
+        )}
       </TouchableOpacity>
+
       <TouchableOpacity
         onPress={() => router.push("/signup")}
         style={{ padding: 10, textAlign: "center", alignSelf: "center" }}
       >
-        <Text style={{ fontSize: 19 }}>You don't have an account ? </Text>
+        <Text style={{ fontSize: 19 }}>You don't have an account? </Text>
       </TouchableOpacity>
     </SafeAreaView>
   );

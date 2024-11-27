@@ -4,7 +4,6 @@ import { Dropdown } from "react-native-element-dropdown";
 import { StyleSheet, Text, View } from "react-native";
 
 const DropdownComponent = ({ value, setValue, data }) => {
-  // تخصيص الخيارات بإضافة أيقونات بجانب النصوص
   const renderItem = (item) => (
     <View style={styles.option}>
       <AntDesign name={item.icon} size={20} color="black" style={styles.icon} />
