@@ -3,6 +3,8 @@ import pricingReducer from "./Slices/PricingReducer";
 import authReducer from "./Slices/AuthSlice/AuthReducer";
 import freedashboardReducer from "./Slices/DashboardSlice/Free-Dashboard";
 import loginReducer from "./Slices/AuthSlice/LoginReducer";
+import proDashboardSliceReducer from "./Slices/DashboardSlice/Pro-Dashboard";
+import userprofileSliceReducer from "./Slices/UserProfile/UserProfileReducer";
 
 const store = configureStore({
   reducer: {
@@ -10,14 +12,13 @@ const store = configureStore({
     pricing: pricingReducer,
     freedashboard: freedashboardReducer,
     login: loginReducer,
+    prodashboard: proDashboardSliceReducer,
+    userprofile: userprofileSliceReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
-        ignoredActions: [
-          "getTasks/rejected", // استبدل بـ الأكشن الخاص بك
-          // أضف المزيد من الأكشنات هنا إذا كان لديك
-        ],
+        ignoredActions: ["getTasks/rejected"],
       },
     }),
 });

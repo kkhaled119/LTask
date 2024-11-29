@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -15,8 +15,47 @@ import {
   FontAwesome6,
 } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { getUserData } from "../../../redux/Slices/UserProfile/UserProfileReducer";
+import { useDispatch, useSelector } from "react-redux";
 
 const Setting = () => {
+  const { loading, error, userData } = useSelector(
+    (state) => state.userprofile
+  );
+  const token = useSelector((state) => state.login.token);
+  const dispatch = useDispatch();
+
+  // eslint-disable-next-line no-unused-vars
+  const [isEditing, setIsEditing] = useState(false);
+  const [profile, setProfile] = useState({
+    first_name: "",
+    last_name: "",
+    email: "",
+    country: "Egypt",
+    imageUrl: "https://placekitten.com/200/200", // placeholder image
+  });
+
+  useEffect(() => {
+    dispatch(getUserData({ token }));
+  }, [dispatch, token]);
+
+  useEffect(() => {
+    if (userData) {
+      setProfile({
+        first_name: userData.first_name || "",
+        last_name: userData.last_name || "",
+        email: userData.email || "",
+        country: "Egypt",
+        imageUrl: "https://placekitten.com/200/200",
+      });
+    }
+  }, [userData]);
+
+  const handleSave = (values) => {
+    setProfile(values);
+    setIsEditing(false);
+  };
+
   const router = useRouter();
   return (
     <SafeAreaView style={styles.container}>
@@ -28,8 +67,12 @@ const Setting = () => {
             }}
             style={styles.profileImage}
           />
-          <Text style={styles.username}>John Doe</Text>
-          <Text style={styles.email}>mahrnkhaled122@gmail.com</Text>
+          <Text style={styles.username}>
+            {profile.first_name || "Name not available"}
+          </Text>
+          <Text style={styles.email}>
+            {profile.email || "Email not available"}
+          </Text>
         </View>
 
         <Text style={styles.header}>Settings</Text>
