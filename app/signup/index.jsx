@@ -1,121 +1,231 @@
+import React, { useState, useEffect } from "react";
 import {
-  SafeAreaView,
-  StyleSheet,
-  Text,
   View,
-  TouchableOpacity,
+  Text,
   TextInput,
+  TouchableOpacity,
+  StyleSheet,
   Alert,
+  Dimensions,
 } from "react-native";
-import AntDesign from "@expo/vector-icons/AntDesign";
-import React, { useState } from "react";
-import { Link, useRouter } from "expo-router";
-import { Button } from "react-native-web";
+import { useDispatch, useSelector } from "react-redux";
+import { signUpUser } from "../../redux/Slices/AuthSlice/AuthReducer";
+import { useNavigation } from "@react-navigation/native";
+import { Linking } from "react-native";
+import GoogleIcon from "react-native-vector-icons/MaterialIcons";
+import { useRouter } from "expo-router";
+
+const { width, height } = Dimensions.get("window");
 
 const SignUp = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const handelSubmit = () => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const route = useRouter();
+  const [formData, setFormData] = useState({
+    first_name: "",
+    last_name: "",
+    email: "",
+    password: "",
+    re_password: "",
+  });
 
-    if (email === "" || password === "") {
-      Alert.alert("Error", "Please fill in both email and password fields.");
-    } else if (!emailRegex.test(email)) {
-      Alert.alert("Error", "Please enter a valid email address.");
-    } else if (password.length < 8) {
-      Alert.alert("Error", "Password must be at least 8 characters long.");
+  const [termsAccepted, setTermsAccepted] = useState(false);
+
+  const dispatch = useDispatch();
+  const navigation = useNavigation();
+  const { loading, user, error, activationSuccess } = useSelector(
+    (state) => state.auth
+  );
+
+  const handleInputChange = (name, value) => {
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = () => {
+    if (termsAccepted) {
+      dispatch(signUpUser(formData));
     } else {
-      Alert.alert("Success", "Logged in successfully!");
-      router.push("/freeDashboard");
+      Alert.alert("Error", "You have to accept the terms and conditions");
     }
   };
 
-  const router = useRouter();
+  useEffect(() => {
+    if (user) {
+      Alert.alert("Success", "User Registered Successfully", [
+        {
+          text: "OK",
+          onPress: () => {
+            const activationUrl = "https://ltask.org/auth/activation-pending";
+            Linking.openURL(activationUrl).catch((err) =>
+              console.error("An error occurred", err)
+            );
+          },
+        },
+      ]);
+    }
+    if (error) {
+      const errorMessage =
+        error.data?.email?.[0] ||
+        error.data?.message ||
+        "Something went wrong.";
+      Alert.alert("Error", errorMessage);
+    }
+    if (activationSuccess) {
+      Alert.alert("Success", "Account Activated Successfully", [
+        {
+          text: "OK",
+          onPress: () => {
+            navigation.navigate("Login");
+          },
+        },
+      ]);
+    }
+  }, [user, error, activationSuccess, navigation]);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <TouchableOpacity onPress={() => router.push("/")}>
-        <AntDesign
-          name="leftcircleo"
-          size={30}
-          color="black"
-          style={styles.backButton}
-        />
-      </TouchableOpacity>
-      <View style={styles.content}>
-        <Text style={styles.title}>Sign up </Text>
-        <Text style={styles.subtitle}>Add your email and password</Text>
+    <View style={styles.container}>
+      <Text style={styles.header}>Sign Up</Text>
+      <Text style={styles.subHeader}>
+        Let’s get you all set up so you can access your personal account.
+      </Text>
+
+      <View style={styles.inputContainer}>
         <TextInput
-          placeholder="Your email"
-          placeholderTextColor="black"
           style={styles.input}
-          value={email}
-          onChangeText={setEmail}
+          placeholder="First Name"
+          value={formData.first_name}
+          onChangeText={(value) => handleInputChange("first_name", value)}
         />
         <TextInput
-          placeholder="Your password"
-          placeholderTextColor="black"
-          style={styles.inputPassword}
-          value={password}
-          onChangeText={setPassword}
+          style={styles.input}
+          placeholder="Last Name"
+          value={formData.last_name}
+          onChangeText={(value) => handleInputChange("last_name", value)}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
+          value={formData.email}
+          onChangeText={(value) => handleInputChange("email", value)}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Password"
           secureTextEntry
+          value={formData.password}
+          onChangeText={(value) => handleInputChange("password", value)}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Confirm Password"
+          secureTextEntry
+          value={formData.re_password}
+          onChangeText={(value) => handleInputChange("re_password", value)}
         />
       </View>
 
-      <TouchableOpacity style={styles.button} onPress={handelSubmit}>
-        <Text style={styles.buttonText}>Sign Up</Text>
+      <View style={styles.checkboxContainer}>
+        <TouchableOpacity
+          style={styles.checkbox}
+          onPress={() => setTermsAccepted(!termsAccepted)}
+        >
+          <Text style={styles.checkboxText}>
+            {termsAccepted ? "✓" : "□"} I agree to the terms and Privacy Policy
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      <TouchableOpacity
+        style={styles.submitButton}
+        onPress={handleSubmit}
+        disabled={loading}
+      >
+        <Text style={styles.buttonText}>
+          {loading ? "Creating..." : "Create Account"}
+        </Text>
       </TouchableOpacity>
-    </SafeAreaView>
+
+      <Text style={styles.loginText}>
+        Already have an account?{" "}
+        <Text style={styles.linkText} onPress={() => route.push("./signin")}>
+          Login
+        </Text>
+      </Text>
+
+      <View style={styles.googleButton}>
+        <Text style={styles.googleText}>Or Sign up with</Text>
+        <TouchableOpacity onPress={() => navigation.navigate("GoogleAuth")}>
+          <Text style={styles.googleText}> Sign in with Google</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 };
 
-export default SignUp;
-
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#FFF6E9",
     flex: 1,
+    padding: width * 0.05,
+    justifyContent: "center",
+    backgroundColor: "#FFF6E9",
   },
-  backButton: {
-    marginLeft: 10,
-    marginTop: 5,
+  header: {
+    fontSize: width * 0.08,
+    fontWeight: "bold",
+    textAlign: "center",
   },
-  content: {
-    padding: 20,
+  subHeader: {
+    fontSize: width * 0.05,
+    textAlign: "center",
+    marginBottom: height * 0.02,
   },
-  title: {
-    fontSize: 40,
-    fontWeight: "600",
-  },
-  subtitle: {
-    marginTop: 10,
-    fontSize: 19,
-    marginBottom: 10,
+  inputContainer: {
+    marginBottom: height * 0.02,
   },
   input: {
-    borderRadius: 10,
-    borderWidth: 1,
+    height: height * 0.07,
     borderColor: "black",
-    padding: 20,
-  },
-  inputPassword: {
-    marginTop: 30,
-    borderRadius: 10,
     borderWidth: 1,
-    borderColor: "black",
-    padding: 20,
+    borderRadius: 8,
+    marginBottom: height * 0.02,
+    paddingLeft: width * 0.04,
   },
-  button: {
+  checkboxContainer: {
+    marginBottom: height * 0.02,
+  },
+  checkbox: {
+    flexDirection: "row",
     alignItems: "center",
-    padding: 20,
+  },
+  checkboxText: {
+    fontSize: width * 0.04,
+  },
+  submitButton: {
     backgroundColor: "#BF3F00",
-    width: "90%",
-    marginTop: 20,
-    alignSelf: "center",
-    borderRadius: 15,
+    padding: height * 0.02,
+    borderRadius: 8,
+    marginBottom: height * 0.02,
+    alignItems: "center",
   },
   buttonText: {
-    color: "white",
-    fontSize: 15,
+    color: "#fff",
+    fontSize: width * 0.05,
+  },
+  loginText: {
+    textAlign: "center",
+    marginBottom: height * 0.02,
+  },
+  linkText: {
+    color: "#BF3F00",
+  },
+  googleButton: {
+    alignItems: "center",
+  },
+  googleText: {
+    color: "#BF3F00",
+    fontSize: width * 0.04,
   },
 });
+
+export default SignUp;

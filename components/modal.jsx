@@ -1,161 +1,111 @@
 import React, { useState } from "react";
-import {
-  Modal,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import { AntDesign } from "@expo/vector-icons";
-import DateTimePicker from "react-native-modal-datetime-picker";
-import DropdownComponent from "./ DropdownComponent";
+import { Modal, View, Text, TextInput, Button, StyleSheet } from "react-native";
+import { Dropdown } from "react-native-element-dropdown";
+import DateTimePickerModal from "react-native-modal-datetime-picker";
 
-const ModalComponent = ({ visible, onClose, onAddTask }) => {
-  const [taskTitle, setTaskTitle] = useState("");
-  const [taskDescription, setTaskDescription] = useState("");
-  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
-  const [selectedStartTime, setSelectedStartTime] = useState("");
-  const [selectedEndTime, setSelectedEndTime] = useState("");
-  const [isStartTimePicker, setIsStartTimePicker] = useState(true);
-  const [dropdownValue, setDropdownValue] = useState(null);
+const ModalComponent = ({
+  isVisible,
+  onClose,
+  taskData,
+  onSubmit,
+  onChange,
+  Categories,
+  onCategoryChange,
+}) => {
+  const [isStartDatePickerVisible, setStartDatePickerVisibility] =
+    useState(false);
+  const [isDueDatePickerVisible, setDueDatePickerVisibility] = useState(false);
 
-  const dropdownData = [
-    { label: "Sports", value: "Sports", icon: "smileo" },
-    { label: "Home", value: "Home" },
-    { label: "Work", value: "Work" },
-    { label: "Grocery", value: "Grocery" },
-    { label: "Other", value: "Other" },
-  ];
-
-  const handleCreate = () => {
-    if (
-      !taskTitle.trim() ||
-      !taskDescription.trim() ||
-      !selectedStartTime ||
-      !selectedEndTime ||
-      !dropdownValue
-    ) {
-      alert("Please fill out all fields.");
-      return;
+  const handleDateConfirm = (selectedDate, fieldName) => {
+    if (selectedDate) {
+      onChange(fieldName, selectedDate.toISOString());
     }
-
-    const newTask = {
-      title: taskTitle,
-      description: taskDescription,
-      startTime: selectedStartTime,
-      endTime: selectedEndTime,
-      category: dropdownValue,
-    };
-
-    onAddTask(newTask);
-    clearFields();
-    onClose();
+    if (fieldName === "start_date") setStartDatePickerVisibility(false);
+    if (fieldName === "due_date") setDueDatePickerVisibility(false);
   };
-
-  const clearFields = () => {
-    setTaskTitle("");
-    setTaskDescription("");
-    setSelectedStartTime("");
-    setSelectedEndTime("");
-    setDropdownValue(null);
-  };
-
-  const showDatePicker = (isStart) => {
-    setIsStartTimePicker(isStart);
-    setDatePickerVisibility(true);
-  };
-
-  const hideDatePicker = () => {
-    setDatePickerVisibility(false);
-  };
-
-  const handleConfirm = (time) => {
-    const formattedTime = time.toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-    if (isStartTimePicker) {
-      setSelectedStartTime(formattedTime);
-    } else {
-      setSelectedEndTime(formattedTime);
-    }
-    hideDatePicker();
-  };
+  console.log("Categories Data: ", Categories);
 
   return (
     <Modal
+      visible={isVisible}
       animationType="slide"
       transparent={true}
-      visible={visible}
       onRequestClose={onClose}
     >
       <View style={styles.modalBackground}>
         <View style={styles.modalContainer}>
           <Text style={styles.modalTitle}>Add New Task</Text>
 
+          {/* Task Name Input */}
           <TextInput
             style={styles.input}
-            placeholder="Task Title"
-            placeholderTextColor="#ccc"
-            value={taskTitle}
-            onChangeText={setTaskTitle}
+            placeholder="Task Name"
+            value={taskData.name}
+            onChangeText={(text) => onChange("name", text)}
           />
+
+          {/* Task Description Input */}
           <TextInput
             style={styles.input}
             placeholder="Task Description"
-            placeholderTextColor="#ccc"
-            value={taskDescription}
-            onChangeText={setTaskDescription}
+            value={taskData.description}
+            onChangeText={(text) => onChange("description", text)}
           />
 
-          <View style={styles.row}>
-            <TextInput
-              style={styles.inputDate}
-              placeholder="Start Time"
-              placeholderTextColor="black"
-              value={selectedStartTime}
-              editable={false}
+          {/* Dropdown for Category */}
+          <Dropdown
+            style={styles.dropdown}
+            placeholderStyle={styles.placeholderStyle}
+            selectedTextStyle={styles.selectedTextStyle}
+            data={Categories}
+            labelField="name"
+            valueField="id"
+            placeholder="Select Category"
+            value={taskData.category || null}
+            onChange={(item) => onCategoryChange(item.id)}
+          />
+
+          {/* Start Date Picker */}
+          <View>
+            <Button
+              title={`Start Date: ${
+                taskData.start_date
+                  ? new Date(taskData.start_date).toLocaleString()
+                  : "Select Date"
+              }`}
+              onPress={() => setStartDatePickerVisibility(true)}
             />
-            <TouchableOpacity onPress={() => showDatePicker(true)}>
-              <AntDesign name="clockcircleo" size={24} color="black" />
-            </TouchableOpacity>
+            <DateTimePickerModal
+              isVisible={isStartDatePickerVisible}
+              mode="datetime"
+              onConfirm={(date) => handleDateConfirm(date, "start_date")}
+              onCancel={() => setStartDatePickerVisibility(false)}
+            />
           </View>
 
-          <View style={styles.row}>
-            <TextInput
-              style={styles.inputDate}
-              placeholder="End Time"
-              placeholderTextColor="black"
-              value={selectedEndTime}
-              editable={false}
+          {/* Due Date Picker */}
+          <View style={{ marginTop: 10 }}>
+            <Button
+              title={`Due Date: ${
+                taskData.due_date
+                  ? new Date(taskData.due_date).toLocaleString()
+                  : "Select Date"
+              }`}
+              onPress={() => setDueDatePickerVisibility(true)}
             />
-            <TouchableOpacity onPress={() => showDatePicker(false)}>
-              <AntDesign name="clockcircleo" size={24} color="black" />
-            </TouchableOpacity>
+            <DateTimePickerModal
+              isVisible={isDueDatePickerVisible}
+              mode="datetime"
+              onConfirm={(date) => handleDateConfirm(date, "due_date")}
+              onCancel={() => setDueDatePickerVisibility(false)}
+            />
           </View>
 
-          <DateTimePicker
-            isVisible={isDatePickerVisible}
-            mode="time"
-            onConfirm={handleConfirm}
-            onCancel={hideDatePicker}
-          />
-
-          {/* Dropdown Component */}
-          <DropdownComponent
-            value={dropdownValue}
-            setValue={setDropdownValue}
-            data={dropdownData}
-          />
-
-          <TouchableOpacity style={styles.createButton} onPress={handleCreate}>
-            <Text style={styles.createButtonText}>Create</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-            <Text style={styles.closeButtonText}>Cancel</Text>
-          </TouchableOpacity>
+          {/* Buttons */}
+          <View style={styles.buttonContainer}>
+            <Button title="Close" onPress={onClose} />
+            <Button title="Create" onPress={onSubmit} />
+          </View>
         </View>
       </View>
     </Modal>
@@ -170,64 +120,44 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalContainer: {
-    width: "80%",
-    backgroundColor: "#FFF",
-    borderRadius: 10,
+    backgroundColor: "white",
     padding: 20,
-    alignItems: "center",
+    width: "80%",
+    borderRadius: 10,
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: "bold",
     marginBottom: 15,
-    color: "#BF3F00",
   },
   input: {
-    width: "100%",
-    padding: 10,
-    marginBottom: 10,
-    borderWidth: 1,
+    height: 40,
     borderColor: "#ccc",
+    borderWidth: 1,
+    marginBottom: 15,
+    paddingLeft: 10,
     borderRadius: 5,
-    backgroundColor: "#f9f9f9",
   },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
+  dropdown: {
+    height: 50,
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: 10,
     marginBottom: 15,
   },
-  inputDate: {
-    flex: 1,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 5,
-    backgroundColor: "#f9f9f9",
-  },
-  createButton: {
-    backgroundColor: "#BF3F00",
-    padding: 10,
-    borderRadius: 5,
-    width: "100%",
-    marginTop: 10,
-  },
-  createButtonText: {
-    color: "white",
-    textAlign: "center",
+  placeholderStyle: {
     fontSize: 16,
+    color: "#999",
   },
-  closeButton: {
-    backgroundColor: "#FFF6E9",
-    padding: 10,
-    borderRadius: 5,
-    width: "100%",
-    marginTop: 10,
-  },
-  closeButtonText: {
-    color: "#BF3F00",
-    textAlign: "center",
+  selectedTextStyle: {
     fontSize: 16,
+    color: "#333",
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 10,
   },
 });
 

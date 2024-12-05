@@ -14,49 +14,22 @@ import {
   FontAwesome,
   FontAwesome6,
 } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import { getUserData } from "../../../redux/Slices/UserProfile/UserProfileReducer";
-import { useDispatch, useSelector } from "react-redux";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation } from "@react-navigation/native";
 
 const Setting = () => {
-  const { loading, error, userData } = useSelector(
-    (state) => state.userprofile
-  );
-  const token = useSelector((state) => state.login.token);
-  const dispatch = useDispatch();
+  const navigate = useNavigation();
 
-  // eslint-disable-next-line no-unused-vars
-  const [isEditing, setIsEditing] = useState(false);
-  const [profile, setProfile] = useState({
-    first_name: "",
-    last_name: "",
-    email: "",
-    country: "Egypt",
-    imageUrl: "https://placekitten.com/200/200", // placeholder image
-  });
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.removeItem("token");
 
-  useEffect(() => {
-    dispatch(getUserData({ token }));
-  }, [dispatch, token]);
-
-  useEffect(() => {
-    if (userData) {
-      setProfile({
-        first_name: userData.first_name || "",
-        last_name: userData.last_name || "",
-        email: userData.email || "",
-        country: "Egypt",
-        imageUrl: "https://placekitten.com/200/200",
-      });
+      navigate.replace("signin");
+    } catch (error) {
+      console.error("Error logging out", error);
     }
-  }, [userData]);
-
-  const handleSave = (values) => {
-    setProfile(values);
-    setIsEditing(false);
   };
 
-  const router = useRouter();
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -67,12 +40,8 @@ const Setting = () => {
             }}
             style={styles.profileImage}
           />
-          <Text style={styles.username}>
-            {profile.first_name || "Name not available"}
-          </Text>
-          <Text style={styles.email}>
-            {profile.email || "Email not available"}
-          </Text>
+          <Text style={styles.username}>User Name</Text>
+          <Text style={styles.email}>user@example.com</Text>
         </View>
 
         <Text style={styles.header}>Settings</Text>
@@ -94,7 +63,7 @@ const Setting = () => {
 
         <TouchableOpacity
           style={styles.option}
-          onPress={() => router.push("/pricing")}
+          onPress={() => navigate.navigate("/pricing")}
         >
           <FontAwesome name="dollar" size={24} color="#BF3F00" />
           <Text style={styles.optionText}>Pricing</Text>
@@ -105,10 +74,7 @@ const Setting = () => {
           <Text style={styles.optionText}>Change Password</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.option}
-          onPress={() => router.push("./index")}
-        >
+        <TouchableOpacity style={styles.option} onPress={handleLogout}>
           <MaterialIcons name="logout" size={24} color="#BF3F00" />
           <Text style={styles.optionText}>Logout</Text>
         </TouchableOpacity>
@@ -125,12 +91,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF6E9",
   },
   scrollContent: {
-    padding: 16, // إضافة padding للمحتوى داخل ScrollView
+    padding: 16,
   },
   imageContainer: {
     alignItems: "center",
     marginBottom: 20,
-    paddingHorizontal: 10, // لتوفير مساحة جانبية
   },
   profileImage: {
     width: 100,

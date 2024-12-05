@@ -2,7 +2,7 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 import APILINK from "../../../constant";
 
-// Create a new Task (Post to the database)
+// Create Task
 export const createTask = createAsyncThunk(
   "freedashboard/createTask",
   async ({ formData, token }, { rejectWithValue }) => {
@@ -19,12 +19,15 @@ export const createTask = createAsyncThunk(
       );
       return response.data;
     } catch (err) {
-      console.error("Task creation error:", err.response?.data);
-      return rejectWithValue(err.response?.data);
+      return rejectWithValue({
+        message: err.response?.data?.message || "An unknown error occurred.",
+        status: err.response?.status,
+      });
     }
   }
 );
-// get all tasks made by a specific user "Not an Id " it retrive by token
+
+// Get User Tasks
 export const getUserTasks = createAsyncThunk(
   "getTasks",
   async (token, { rejectWithValue }) => {
@@ -36,17 +39,19 @@ export const getUserTasks = createAsyncThunk(
       });
       return response.data;
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue({
+        message: error.response?.data?.message || "An unknown error occurred.",
+        status: error.response?.status,
+      });
     }
   }
 );
-//delete Task By the user
+
+// Delete User Task
 export const deleteUserTask = createAsyncThunk(
   "freedashboard/deleteUserTask",
   async ({ token, selectedTaskId }, { rejectWithValue }) => {
     try {
-      // console.log(token);
-
       const response = await axios.delete(
         `${APILINK}/free_task/tasks/${selectedTaskId}/`,
         {
@@ -55,12 +60,16 @@ export const deleteUserTask = createAsyncThunk(
           },
         }
       );
-      return response.data;
+      return { id: selectedTaskId, status: response.data };
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue({
+        message: error.response?.data?.message || "An unknown error occurred.",
+        status: error.response?.status,
+      });
     }
   }
 );
+
 // Edit User Task
 export const editUserTask = createAsyncThunk(
   "freedashboard/editUserTask",
@@ -77,11 +86,15 @@ export const editUserTask = createAsyncThunk(
       );
       return { id: taskId, updatedTask: response.data };
     } catch (err) {
-      return rejectWithValue(err.response?.data);
+      return rejectWithValue({
+        message: err.response?.data?.message || "An unknown error occurred.",
+        status: err.response?.status,
+      });
     }
   }
 );
 
+// Slice
 const freeDashboardSlice = createSlice({
   name: "freeDashboard",
   initialState: {
@@ -93,36 +106,20 @@ const freeDashboardSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
+      // Create Task
       .addCase(createTask.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(createTask.fulfilled, (state, action) => {
         state.loading = false;
-        state.tasks.push(action.payload); // Add the created task to the tasks list
+        state.tasks = [...state.tasks, action.payload];
       })
       .addCase(createTask.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload; // Set the error message
+        state.error = action.payload?.message || "Failed to create task.";
       })
-      //Edit User Task
-      .addCase(editUserTask.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(editUserTask.fulfilled, (state, action) => {
-        state.loading = false;
-        const { id, updatedTask } = action.payload;
-        const index = state.tasks.findIndex((task) => task.id === id);
-        if (index !== -1) {
-          state.tasks[index] = updatedTask; // Update only the modified task
-        }
-      })
-      .addCase(editUserTask.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      })
-      //Get User Tasks
+      // Get User Tasks
       .addCase(getUserTasks.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -133,20 +130,39 @@ const freeDashboardSlice = createSlice({
       })
       .addCase(getUserTasks.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload?.message || "Failed to fetch tasks.";
       })
-      //delete User Task
+      // Delete User Task
       .addCase(deleteUserTask.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(deleteUserTask.fulfilled, (state, action) => {
         state.loading = false;
-        state.status = action.payload;
+        const { id } = action.payload;
+        state.tasks = state.tasks.filter((task) => task.id !== id);
+        state.status = action.payload.status;
       })
       .addCase(deleteUserTask.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload?.message || "Failed to delete task.";
+      })
+      // Edit User Task
+      .addCase(editUserTask.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(editUserTask.fulfilled, (state, action) => {
+        state.loading = false;
+        const { id, updatedTask } = action.payload;
+        const index = state.tasks.findIndex((task) => task.id === id);
+        if (index !== -1) {
+          state.tasks[index] = updatedTask;
+        }
+      })
+      .addCase(editUserTask.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload?.message || "Failed to edit task.";
       });
   },
 });

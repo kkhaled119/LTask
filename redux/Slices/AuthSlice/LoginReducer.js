@@ -76,7 +76,7 @@ const loginSlice = createSlice({
       // Logout User
       .addCase(logoutUser.fulfilled, (state) => {
         state.token = null;
-        state.isAuthenticated = false; // Mark user as not authenticated
+        state.isAuthenticated = false;
         state.loading = false;
         state.error = null;
       })

@@ -1,2 +1,2 @@
-const APILINK = "http://127.0.0.1:8000";
+const APILINK = "https://ltask.org/backend_api";
 export default APILINK;

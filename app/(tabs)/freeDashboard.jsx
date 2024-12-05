@@ -1,126 +1,134 @@
-import React, { useState } from "react";
 import {
   SafeAreaView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
+  Dimensions,
   ScrollView,
 } from "react-native";
-import {
-  MenuProvider,
-  Menu,
-  MenuTrigger,
-  MenuOptions,
-  MenuOption,
-} from "react-native-popup-menu";
+import React, { useState, useEffect } from "react";
 import ModalComponent from "../../components/modal";
-import { MaterialIcons } from "@expo/vector-icons";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import {
+  createTask,
+  getUserTasks,
+} from "../../redux/Slices/DashboardSlice/Free-Dashboard";
+import CategoryList, {
+  DailogCategories,
+} from "../../components/ DailogCategories";
+import TaskList from "../../components/TaskList";
+
+const { width, height } = Dimensions.get("window");
+
 const FreeDashboard = () => {
-  const [modalVisible, setModalVisible] = useState(false);
-  const [tasks, setTasks] = useState([]);
+  const [modelVisable, setModalVisible] = useState(false);
+  const [taskData, setTaskData] = useState({
+    name: "",
+    description: "",
+    category: "",
+    start_date: "",
+    due_date: "",
+  });
+  const dispatch = useDispatch();
+  const token = useSelector((state) => state.login.token);
+  const { tasks, loading } = useSelector((state) => state.freedashboard);
+  const openModal = () => setModalVisible(true);
+  const closeModal = () => setModalVisible(false);
 
-  const toggleModal = () => {
-    setModalVisible(!modalVisible);
+  const handleChange = (field, value) => {
+    setTaskData((prevData) => ({
+      ...prevData,
+      [field]: value,
+    }));
   };
 
-  const handleDelete = (task) => {
-    console.log("Delete:", task);
+  const formatDate = (date) => {
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    const hours = String(d.getHours()).padStart(2, "0");
+    const minutes = String(d.getMinutes()).padStart(2, "0");
+    const seconds = String(d.getSeconds()).padStart(2, "0");
+
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
   };
 
-  const handleEdit = (task) => {
-    console.log("Edit:", task);
+  const handleAddTask = async () => {
+    if (!taskData.name.trim() || !taskData.description.trim()) {
+      console.log("Please provide task name and description");
+      return;
+    }
+
+    if (!taskData.start_date || !taskData.due_date) {
+      console.log("Please select start and due dates");
+      return;
+    }
+
+    try {
+      const formattedStartDate = formatDate(taskData.start_date);
+      const formattedDueDate = formatDate(taskData.due_date);
+
+      const updatedTaskData = {
+        ...taskData,
+        start_date: formattedStartDate,
+        due_date: formattedDueDate,
+      };
+
+      await dispatch(createTask({ formData: updatedTaskData, token })).unwrap();
+
+      // Reset form data
+      setTaskData({
+        name: "",
+        description: "",
+        start_date: "",
+        due_date: "",
+        category: "",
+      });
+      setModalVisible(false);
+    } catch (error) {
+      console.error("Failed to create task:", error);
+    }
   };
 
-  const addTask = (task) => {
-    setTasks((prevTasks) => [...prevTasks, { ...task, completed: false }]);
-    toggleModal();
+  const handleCategoryChange = (id) => {
+    console.log("Selected Category ID:", id);
+    setTaskData({ ...taskData, category: id });
   };
+
+  useEffect(() => {
+    dispatch(getUserTasks(token));
+    console.log("Tasks after fetching:", tasks);
+  }, [dispatch, token]);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.headerContainer}>
-        <Text style={styles.headerText}>Tasks</Text>
-      </View>
-
-      <TouchableOpacity onPress={toggleModal} style={styles.addButton}>
-        <Text style={styles.addButtonText}>Add Task</Text>
-      </TouchableOpacity>
-
-      <MenuProvider>
-        <ScrollView contentContainerStyle={styles.taskList}>
-          {tasks.map((item, index) => (
-            <View key={index.toString()} style={styles.taskItem}>
-              <View style={styles.taskHeader}>
-                <Text style={styles.taskTitle}>{item.title}</Text>
-                <Text style={styles.taskCategory}>{item.category}</Text>
-              </View>
-              <Text style={styles.taskDescription}>{item.description}</Text>
-              <View style={styles.taskTimeContainer}>
-                <Text style={styles.taskTime}>
-                  {`(${item.startTime} - ${item.endTime})`}
-                </Text>
-
-                {/* Popup Menu */}
-                <Menu>
-                  {/* Trigger (Three Dots Icon) */}
-                  <MenuTrigger>
-                    <Text style={styles.menuTrigger}>•••</Text>
-                  </MenuTrigger>
-                  {/* Menu Options */}
-                  <MenuOptions
-                    customStyles={{
-                      optionsContainer: styles.menuOptionsContainer,
-                    }}
-                  >
-                    <MenuOption
-                      onSelect={() => handleEdit(item)}
-                      customStyles={{
-                        optionWrapper: styles.menuOptionWrapper,
-                      }}
-                    >
-                      <View
-                        style={{ flexDirection: "row", alignItems: "center" }}
-                      >
-                        <MaterialIcons name="edit" size={20} color="#D32F2F" />
-                        <TouchableOpacity>
-                          <Text style={styles.menuOptionText}>Edit</Text>
-                        </TouchableOpacity>
-                      </View>
-                    </MenuOption>
-
-                    <MenuOption
-                      onSelect={() => handleDelete(item)}
-                      customStyles={{
-                        optionWrapper: styles.menuOptionWrapper,
-                      }}
-                    >
-                      <View
-                        style={{ flexDirection: "row", alignItems: "center" }}
-                      >
-                        <MaterialIcons
-                          name="delete"
-                          size={20}
-                          color="#D32F2F"
-                        />
-                        <TouchableOpacity>
-                          <Text style={styles.menuOptionText}>Delete</Text>
-                        </TouchableOpacity>
-                      </View>
-                    </MenuOption>
-                  </MenuOptions>
-                </Menu>
-              </View>
-            </View>
-          ))}
-        </ScrollView>
-      </MenuProvider>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#FFF6E9" }}>
+      <ScrollView contentContainerStyle={styles.scrollViewContainer}>
+        <TaskList
+          tasks={tasks}
+          Categories={DailogCategories}
+          taskData={taskData}
+          onChange={handleChange}
+          onSubmit={handleAddTask}
+          style={styles.taskList}
+          nestedScrollEnabled={true}
+        />
+        <View style={styles.addTaskContainer}>
+          <TouchableOpacity onPress={openModal} style={styles.addTaskButton}>
+            <Text style={styles.addTaskButtonText}>Add Task</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
 
       <ModalComponent
-        visible={modalVisible}
-        onClose={toggleModal}
-        onAddTask={addTask}
+        isVisible={modelVisable}
+        onClose={closeModal}
+        taskData={taskData}
+        onChange={handleChange}
+        onSubmit={handleAddTask}
+        onCategoryChange={handleCategoryChange}
+        Categories={DailogCategories}
       />
     </SafeAreaView>
   );
@@ -129,107 +137,27 @@ const FreeDashboard = () => {
 export default FreeDashboard;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#FFF6E9",
-    paddingHorizontal: 20,
-  },
-  headerContainer: {
-    paddingVertical: 20,
-  },
-  headerText: {
-    fontWeight: "bold",
-    fontSize: 20,
-    color: "#BF3F00",
-    padding: 10,
-  },
-  addButton: {
-    paddingVertical: 10,
-    backgroundColor: "#BF3F00",
-    width: "30%",
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 20,
-    marginLeft: 20,
-  },
-  addButtonText: {
-    fontSize: 18,
-    color: "white",
+  scrollViewContainer: {
+    flexGrow: 1,
+    padding: width * 0.05,
   },
   taskList: {
-    padding: 20,
+    marginBottom: height * 0.05, // مسافة بين قائمة المهام والزر
   },
-  taskItem: {
-    backgroundColor: "#FFF",
+  addTaskContainer: {
+    padding: width * 0.05,
+    justifyContent: "flex-end", // وضع الزر في أسفل الصفحة
+    alignItems: "flex-start", // أو يمكن ضبطه على `center` لتوسيط الزر في الجهة اليسرى
+  },
+  addTaskButton: {
+    backgroundColor: "#BF3F00",
+    paddingVertical: height * 0.02,
+    paddingHorizontal: width * 0.1,
     borderRadius: 10,
-    padding: 15,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
-    marginBottom: 15,
-    borderLeftWidth: 5,
-    borderLeftColor: "#D97706",
-  },
-  taskHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  taskTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#333",
-  },
-  taskCategory: {
-    fontSize: 14,
-    color: "#D97706",
-    fontWeight: "bold",
-    backgroundColor: "#FDF1E2",
-    padding: 5,
-    borderRadius: 5,
-  },
-  taskDescription: {
-    fontSize: 14,
-    color: "#555",
-    marginBottom: 10,
-  },
-  taskTimeContainer: {
-    marginTop: 10,
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  taskTime: {
-    fontSize: 12,
-    color: "#555",
-  },
-  menuTrigger: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#D97706",
-  },
-  menuOptionsContainer: {
-    padding: 5,
-    backgroundColor: "#FFF6E9",
-    borderRadius: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
-  },
-  menuOptionWrapper: {
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    flexDirection: "row",
     alignItems: "center",
   },
-  menuOptionText: {
-    fontSize: 16,
-    color: "#D32F2F",
-    marginLeft: 10,
+  addTaskButtonText: {
+    color: "white",
+    fontSize: width * 0.04,
   },
 });

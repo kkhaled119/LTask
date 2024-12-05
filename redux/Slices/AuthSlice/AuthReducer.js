@@ -1,13 +1,12 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
-// import APILINK from "../../../../Constants"; // Ensure this is the correct base API URL
+import APILINK from "../../../constant"; // Ensure this is the correct base API URL
 
 // Async thunk for signing up the user
 export const signUpUser = createAsyncThunk(
   "auth/signUpUser",
   async (formData, { rejectWithValue }) => {
     try {
-      // console.log("Data from AuthReducer", formData);
       const response = await axios.post(`${APILINK}/auth/users/`, formData, {
         headers: {
           "Content-Type": "application/json",
@@ -15,10 +14,16 @@ export const signUpUser = createAsyncThunk(
       });
       return response.data; // Return the API response
     } catch (error) {
-      return rejectWithValue(error.response); // Handle error and reject with value
+      // Filter error data
+      return rejectWithValue({
+        status: error.response?.status,
+        message: error.response?.data?.detail || "An error occurred",
+      });
     }
   }
 );
+
+// Async thunk for activating the user
 export const activateUser = createAsyncThunk(
   "auth/activateUser",
   async ({ uid, token }, { rejectWithValue }) => {
@@ -29,27 +34,35 @@ export const activateUser = createAsyncThunk(
       });
       return response.data; // Return success response
     } catch (error) {
-      return rejectWithValue(error.response.data); // Return error response
+      // Filter error data
+      return rejectWithValue({
+        status: error.response?.status,
+        message: error.response?.data?.detail || "Activation failed",
+      });
     }
   }
 );
+
 // Async thunk for Google authentication
 export const googleAuth = createAsyncThunk(
   "auth/googleAuth",
   async (_, { rejectWithValue }) => {
     try {
-      console.log("Calling API for Google Authentication...");
-      const response = await axios.get(`${APILINK}/users/auth/google/`, {
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-      });
-      console.log("Google Auth Response:", response.data);
+      const response = await axios.get(
+        `${APILINK}/users/auth/google/callback/`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
       return response.data; // Return user data or JWT from the response
     } catch (error) {
-      console.log("Google Auth Error:", error);
-      return rejectWithValue(error.response); // Handle error and reject with value
+      // Filter error data
+      return rejectWithValue({
+        status: error.response?.status,
+        message: error.response?.data?.detail || "Google Authentication failed",
+      });
     }
   }
 );
@@ -72,13 +85,14 @@ const authSlice = createSlice({
       .addCase(signUpUser.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload; // Set user data on successful sign-up
+        state.error = null; // Clear previous errors
       })
       .addCase(signUpUser.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload; // Store filtered error data
       })
 
-      // Activate user logic (this is where you handle the activation)
+      // Activate user logic
       .addCase(activateUser.pending, (state) => {
         state.loading = true;
         state.activationSuccess = false;
@@ -86,10 +100,12 @@ const authSlice = createSlice({
       .addCase(activateUser.fulfilled, (state) => {
         state.loading = false;
         state.activationSuccess = true;
+        state.error = null; // Clear previous errors
       })
       .addCase(activateUser.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.activationSuccess = false;
+        state.error = action.payload; // Store filtered error data
       })
 
       // Google authentication logic
@@ -99,10 +115,11 @@ const authSlice = createSlice({
       .addCase(googleAuth.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload; // Store the user data received from Google Auth
+        state.error = null; // Clear previous errors
       })
       .addCase(googleAuth.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload; // Handle any errors
+        state.error = action.payload; // Store filtered error data
       });
   },
 });

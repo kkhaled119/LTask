@@ -26,7 +26,7 @@ const SignIn = () => {
   const handleSubmit = async () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    if (email === "" || password === "") {
+    if (!email || !password) {
       Alert.alert("Error", "Please fill in both email and password fields.");
     } else if (!emailRegex.test(email)) {
       Alert.alert("Error", "Please enter a valid email address.");
@@ -39,14 +39,18 @@ const SignIn = () => {
         const resultAction = await dispatch(loginUser(formData)); // Dispatch login action
 
         if (loginUser.fulfilled.match(resultAction)) {
-          // Only redirect if login is successful
           Alert.alert("Success", "Logged in successfully!");
           router.push("/freeDashboard");
         } else {
-          Alert.alert("Error", "Login failed. Please check your credentials.");
+          Alert.alert(
+            "Error",
+            resultAction.payload?.message ||
+              "Login failed. Please check your credentials."
+          );
         }
       } catch (error) {
         Alert.alert("Error", "An unexpected error occurred.");
+        console.error(error); // Log the error for debugging
       } finally {
         setLoading(false); // Hide loading indicator after login attempt
       }
@@ -72,6 +76,8 @@ const SignIn = () => {
           style={styles.input}
           value={email}
           onChangeText={setEmail}
+          keyboardType="email-address"
+          editable={!loading}
         />
         <TextInput
           placeholder="Your password"
@@ -80,12 +86,13 @@ const SignIn = () => {
           value={password}
           onChangeText={setPassword}
           secureTextEntry
+          returnKeyType="done"
+          editable={!loading}
         />
       </View>
 
-      {/* Show loading indicator when submitting */}
       <TouchableOpacity
-        style={styles.button}
+        style={[styles.button, loading && { opacity: 0.7 }]}
         onPress={handleSubmit}
         disabled={loading}
       >
@@ -107,7 +114,6 @@ const SignIn = () => {
 };
 
 export default SignIn;
-
 const styles = StyleSheet.create({
   container: {
     backgroundColor: "#FFF6E9",
@@ -119,40 +125,77 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
+    marginTop: 50,
   },
   title: {
     fontSize: 40,
     fontWeight: "600",
+    color: "#333",
+    textAlign: "center",
   },
   subtitle: {
     marginTop: 10,
-    fontSize: 19,
-    marginBottom: 10,
+    fontSize: 18,
+    color: "#555",
+    textAlign: "center",
+    marginBottom: 30,
   },
   input: {
     borderRadius: 10,
     borderWidth: 1,
     borderColor: "black",
-    padding: 20,
+    padding: 15,
+    fontSize: 16,
+    color: "black",
+    marginBottom: 20,
+    backgroundColor: "white",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   inputPassword: {
-    marginTop: 30,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: "black",
-    padding: 20,
+    padding: 15,
+    fontSize: 16,
+    color: "black",
+    backgroundColor: "white",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   button: {
     alignItems: "center",
-    padding: 20,
+    padding: 15,
     backgroundColor: "#BF3F00",
     width: "90%",
-    marginTop: 20,
+    marginTop: 30,
     alignSelf: "center",
     borderRadius: 15,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5, // تأثير ثلاثي الأبعاد للأندرويد
   },
   buttonText: {
     color: "white",
-    fontSize: 15,
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  signUpText: {
+    marginTop: 20,
+    fontSize: 16,
+    color: "#444",
+    textAlign: "center",
+  },
+  signUpLink: {
+    fontWeight: "bold",
+    color: "#BF3F00",
   },
 });
