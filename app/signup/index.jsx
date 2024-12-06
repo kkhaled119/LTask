@@ -56,10 +56,7 @@ const SignUp = () => {
         {
           text: "OK",
           onPress: () => {
-            const activationUrl = "https://ltask.org/auth/activation-pending";
-            Linking.openURL(activationUrl).catch((err) =>
-              console.error("An error occurred", err)
-            );
+            navigation.navigate("ActivationPending");
           },
         },
       ]);

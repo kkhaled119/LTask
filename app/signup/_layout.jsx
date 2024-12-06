@@ -10,6 +10,7 @@ const _layout = () => {
       }}
     >
       <Stack.Screen name="index" />
+      <Stack.Screen name="ActivationPending" />
     </Stack>
   );
 };

@@ -13,6 +13,7 @@ import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { loginUser } from "../../redux/Slices/AuthSlice/LoginReducer";
 import { useRouter } from "expo-router";
+import { useNavigation } from "@react-navigation/native";
 
 const SignIn = () => {
   const [email, setEmail] = useState("");
@@ -20,6 +21,7 @@ const SignIn = () => {
   const [loading, setLoading] = useState(false);
   const dispatch = useDispatch();
   const router = useRouter();
+  const navigation = useNavigation();
 
   const isAuthenticated = useSelector((state) => state.login.isAuthenticated);
 
@@ -89,6 +91,16 @@ const SignIn = () => {
           returnKeyType="done"
           editable={!loading}
         />
+        <View>
+          <TouchableOpacity
+            style={{ padding: 10 }}
+            onPress={() => navigation.navigate("ForgetPassword")}
+          >
+            <Text style={{ color: "#BF3F00", fontSize: 15 }}>
+              Forgot password
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <TouchableOpacity
